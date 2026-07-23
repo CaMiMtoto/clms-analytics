@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "laravel-boost": {
+      "command": "C:\\Users\\CaMi\\.config\\herd\\bin\\php84\\php.exe",
+      "args": [
+        "C:\\Users\\CaMi\\PhpstormProjects\\clms-analytics\\artisan",
+        "boost:mcp"
+      ]
+    }
+  }
+}
