@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
     mbstring \
     zip \
     bcmath
-
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . .
 
 RUN chown -R www-data:www-data /var/www/html/storage \
