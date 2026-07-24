@@ -1,0 +1,11 @@
+services:
+    laravel:
+        build:
+            context: .
+        container_name: clms-app
+        ports:
+            - "8000:80"
+        volumes:
+            - .:/var/www/html
+        environment:
+            APP_ENV: production
