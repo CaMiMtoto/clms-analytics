@@ -1,20 +1,20 @@
 services:
 
-    app:
-        build:
-            context: .
-        container_name: clms-app
-        volumes:
-            - .:/var/www/html
+  app:
+    build:
+      context: .
+    container_name: clms-app
+    volumes:
+      - .:/var/www/html
 
 
-    nginx:
-        image: nginx:latest
-        container_name: clms-nginx
-        ports:
-            - "8080:80"
-        volumes:
-            - .:/var/www/html
-            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-        depends_on:
-            - app
+  nginx:
+    image: nginx:latest
+    container_name: clms-nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
