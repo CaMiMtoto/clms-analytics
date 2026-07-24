@@ -41,7 +41,8 @@ new class extends Component {
         if (in_array($propertyName, ['selectedSector', 'selectedStatus', 'search'])) {
             $this->resetPage();
             $this->loadData();
-            $this->dispatch('chartsUpdated');
+            // Pass the updated data to the JavaScript event
+            $this->dispatch('chartsUpdated', statusData: $this->statusData, sectorData: $this->sectorData);
         }
     }
 
@@ -475,9 +476,12 @@ new class extends Component {
 <script>
     let sectorChart, healthChart;
 
-    function initCharts() {
+    function initCharts(newStatusData = null, newSectorData = null) {
+        // Use the new data if provided, otherwise use the initial data from Livewire's first render
+        const currentSectorData = newSectorData || @js($sectorData);
+        const currentStatusData = newStatusData || @js($statusData);
+
         const sectorCtx = document.getElementById('sectorChart').getContext('2d');
-        const sectorData = @js($sectorData);
 
         const sectorGradient = sectorCtx.createLinearGradient(0, 0, 0, 300);
         sectorGradient.addColorStop(0, '#00487F');
@@ -487,10 +491,10 @@ new class extends Component {
         sectorChart = new Chart(sectorCtx, {
             type: 'bar',
             data: {
-                labels: sectorData.labels,
+                labels: currentSectorData.labels,
                 datasets: [{
                     label: 'Volume Count',
-                    data: sectorData.counts,
+                    data: currentSectorData.counts,
                     backgroundColor: sectorGradient,
                     borderRadius: 8,
                     barThickness: 32,
@@ -522,16 +526,15 @@ new class extends Component {
         });
 
         const healthCtx = document.getElementById('healthChart').getContext('2d');
-        const statusData = @js($statusData);
 
         if (healthChart) healthChart.destroy();
         healthChart = new Chart(healthCtx, {
             type: 'doughnut',
             data: {
-                labels: statusData.map(s => s.label),
+                labels: currentStatusData.map(s => s.label),
                 datasets: [{
-                    data: statusData.map(s => s.count),
-                    backgroundColor: statusData.map(s => s.color),
+                    data: currentStatusData.map(s => s.count),
+                    backgroundColor: currentStatusData.map(s => s.color),
                     borderWidth: 0,
                     hoverOffset: 4,
                     cutout: '82%',
@@ -548,7 +551,7 @@ new class extends Component {
                         padding: 12,
                         callbacks: {
                             label: function (context) {
-                                const item = statusData[context.dataIndex];
+                                const item = currentStatusData[context.dataIndex];
                                 return `${item.label}: ${item.count} items (${item.percentage}%)`;
                             }
                         }
@@ -558,10 +561,12 @@ new class extends Component {
         });
     }
 
+    // Initial chart render
     initCharts();
 
-    Livewire.on('chartsUpdated', () => {
-        initCharts();
+    // Listen for Livewire updates and re-render charts with new data
+    Livewire.on('chartsUpdated', ({ statusData, sectorData }) => {
+        initCharts(statusData, sectorData);
     });
 </script>
 @endscript
