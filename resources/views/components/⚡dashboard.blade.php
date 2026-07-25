@@ -219,7 +219,7 @@ new class extends Component {
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-            <h1 class="text-xl font-bold text-slate-900 tracking-tight mb-1">Global Dashboard</h1>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight mb-1">Dashboard</h1>
             <p class="text-slate-400 text-sm">Real-time application tracking and sector performance analytics.</p>
         </div>
 
