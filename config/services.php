@@ -34,5 +34,9 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'sso' => [
+        'secret' => env('SSO_SECRET'),
+        'provider_url' => env('SSO_PROVIDER_URL', 'https://licensing.rura.rw'),
+    ],
 
 ];
