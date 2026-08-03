@@ -71,7 +71,7 @@ new class extends Component {
             'counts' => $sectors->pluck('total')->toArray(),
         ];
 
-        // 2. Health Status Data for Donut Chart & KPIs
+        // 2. Delay Status Data for Donut Chart & KPIs (driven by the is_delayed column)
         $baseKpiQuery = MvPendingApplication::query();
 
         if ($this->selectedSector) {
@@ -89,37 +89,21 @@ new class extends Component {
 
         $totalApplications = (clone $baseKpiQuery)->count();
 
-        $onTrack = (clone $baseKpiQuery)->where('days_pending', '<=', 20)->count();
-        $delayed = (clone $baseKpiQuery)->where('days_pending', '>', 20)->where('days_pending', '<=', 90)->count();
-        $significant = (clone $baseKpiQuery)->where('days_pending', '>', 90)->where('days_pending', '<=', 180)->count();
-        $critical = (clone $baseKpiQuery)->where('days_pending', '>', 180)->count();
+        $delayedCount = (clone $baseKpiQuery)->where('is_delayed', true)->count();
+        $onTimeCount = $totalApplications - $delayedCount;
 
         $this->statusData = [
             [
-                'label' => 'On Track',
-                'count' => $onTrack,
-                'percentage' => $totalApplications > 0 ? round(($onTrack / $totalApplications) * 100) : 0,
+                'label' => 'On Time',
+                'count' => $onTimeCount,
+                'percentage' => $totalApplications > 0 ? round(($onTimeCount / $totalApplications) * 100) : 0,
                 'color' => '#10b981',
                 'tailwind' => 'emerald-500'
             ],
             [
                 'label' => 'Delayed',
-                'count' => $delayed,
-                'percentage' => $totalApplications > 0 ? round(($delayed / $totalApplications) * 100) : 0,
-                'color' => '#f59e0b',
-                'tailwind' => 'amber-500'
-            ],
-            [
-                'label' => 'Significant',
-                'count' => $significant,
-                'percentage' => $totalApplications > 0 ? round(($significant / $totalApplications) * 100) : 0,
-                'color' => '#f97316',
-                'tailwind' => 'orange-500'
-            ],
-            [
-                'label' => 'Critical',
-                'count' => $critical,
-                'percentage' => $totalApplications > 0 ? round(($critical / $totalApplications) * 100) : 0,
+                'count' => $delayedCount,
+                'percentage' => $totalApplications > 0 ? round(($delayedCount / $totalApplications) * 100) : 0,
                 'color' => '#f43f5e',
                 'tailwind' => 'rose-500'
             ],
@@ -135,32 +119,18 @@ new class extends Component {
                 'color' => 'blue',
             ],
             [
-                'label' => 'On Track',
-                'value' => $onTrack,
-                'description' => '0-20 days',
-                'icon' => 'lucide-check-circle-2',
-                'color' => 'emerald',
-            ],
-            [
-                'label' => 'Delayed',
-                'value' => $delayed,
-                'description' => '21-90 days',
-                'icon' => 'lucide-clock-3',
-                'color' => 'amber',
-            ],
-            [
-                'label' => 'Significant',
-                'value' => $significant,
-                'description' => '91-180 days',
-                'icon' => 'lucide-alert-circle',
-                'color' => 'orange',
-            ],
-            [
-                'label' => 'Critical',
-                'value' => $critical,
-                'description' => '180+ days',
+                'label' => 'Delayed Applications',
+                'value' => $delayedCount,
+                'description' => 'Flagged as delayed',
                 'icon' => 'lucide-alert-triangle',
                 'color' => 'rose',
+            ],
+            [
+                'label' => 'On Time',
+                'value' => $onTimeCount,
+                'description' => 'Not flagged as delayed',
+                'icon' => 'lucide-check-circle-2',
+                'color' => 'emerald',
             ],
         ];
     }
@@ -264,15 +234,13 @@ new class extends Component {
         </div>
     </div>
 
-    {{-- Redesigned KPIs --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-10">
+    {{-- KPIs: Total Pending, Delayed Applications, On Time --}}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
         @foreach($kpis as $kpi)
             <div @class([
                 'relative overflow-hidden p-4 rounded-2xl border bg-white transition-all hover:shadow-md group',
                 'border-blue-100 hover:border-blue-200' => $kpi['color'] === 'blue',
                 'border-emerald-100 hover:border-emerald-200' => $kpi['color'] === 'emerald',
-                'border-amber-100 hover:border-amber-200' => $kpi['color'] === 'amber',
-                'border-orange-100 hover:border-orange-200' => $kpi['color'] === 'orange',
                 'border-rose-100 hover:border-rose-200' => $kpi['color'] === 'rose',
             ])>
                 <div class="flex justify-between items-start mb-4">
@@ -280,8 +248,6 @@ new class extends Component {
                         'p-2.5 rounded-xl transition-colors',
                         'bg-accent/10 text-accent group-hover:bg-blue-100' => $kpi['color'] === 'blue',
                         'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100' => $kpi['color'] === 'emerald',
-                        'bg-amber-50 text-amber-600 group-hover:bg-amber-100' => $kpi['color'] === 'amber',
-                        'bg-orange-50 text-orange-600 group-hover:bg-orange-100' => $kpi['color'] === 'orange',
                         'bg-rose-50 text-rose-600 group-hover:bg-rose-100' => $kpi['color'] === 'rose',
                     ])>
                         <x-dynamic-component :component="$kpi['icon']" class="w-6 h-6"/>
@@ -300,8 +266,6 @@ new class extends Component {
                     'absolute -right-4 -bottom-4 w-24 h-24 opacity-[0.03] transition-transform group-hover:scale-110',
                     'text-blue-600' => $kpi['color'] === 'blue',
                     'text-emerald-600' => $kpi['color'] === 'emerald',
-                    'text-amber-600' => $kpi['color'] === 'amber',
-                    'text-orange-600' => $kpi['color'] === 'orange',
                     'text-rose-600' => $kpi['color'] === 'rose',
                 ])>
                     <x-dynamic-component :component="$kpi['icon']" class="w-full h-full"/>
@@ -325,11 +289,11 @@ new class extends Component {
             </div>
         </div>
 
-        <!-- Health Status Donut -->
+        <!-- Delay Status Donut -->
         <div class="bg-white rounded-2xl border border-slate-200 p-8">
             <div class="mb-8">
-                <h3 class="text-xl font-bold text-slate-900">Health Status</h3>
-                <p class="text-sm text-slate-500 mt-1">Application lifecycle metrics</p>
+                <h3 class="text-xl font-bold text-slate-900">Delay Status</h3>
+                <p class="text-sm text-slate-500 mt-1">Share of applications flagged as delayed</p>
             </div>
 
             <div class="relative w-56 h-56 mx-auto mb-10">
@@ -348,8 +312,6 @@ new class extends Component {
                             <div @class([
                                 'w-3 h-3 rounded-full shadow-sm',
                                 'bg-emerald-500 shadow-emerald-100' => $status['tailwind'] === 'emerald-500',
-                                'bg-amber-500 shadow-amber-100' => $status['tailwind'] === 'amber-500',
-                                'bg-orange-500 shadow-orange-100' => $status['tailwind'] === 'orange-500',
                                 'bg-rose-500 shadow-rose-100' => $status['tailwind'] === 'rose-500',
                             ])></div>
                             <span
@@ -414,9 +376,9 @@ new class extends Component {
                                    wire:click="sort('days_pending')">
                     <span class="px-3">Pending Days</span>
                 </flux:table.column>
-                <flux:table.column>
-                    <span class="px-3">Aging Bucket
-                    </span>
+                <flux:table.column sortable :sorted="$sortBy === 'is_delayed'" :direction="$sortDirection"
+                                   wire:click="sort('is_delayed')">
+                    <span class="px-3">Delayed</span>
                 </flux:table.column>
             </flux:table.columns>
 
@@ -456,8 +418,13 @@ new class extends Component {
                             </span>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <span
-                                class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ $app->age_bucket }}</span>
+                             <span @class([
+                                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border',
+                                    'bg-rose-50 text-rose-700 border-rose-100' => $app->is_delayed,
+                                    'bg-emerald-50 text-emerald-700 border-emerald-100' => ! $app->is_delayed,
+                                ])>
+                                {{ $app->is_delayed ? 'Delayed' : 'On Time' }}
+                            </span>
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach
